@@ -14,8 +14,13 @@ int strtoint(char* num){
 
 void work( char *num ) {
 	int i,N = strtoint(num);
-	for (i = 0; i < N; i++ )
+	int cont = 1;
+	for (i = 0; i < N; i++ ){
+		printf( "%d seg, ", cont );
 		sleep(1);
+		cont++;
+	}
+	printf("\n");
 	return;
 }
 
