@@ -18,6 +18,7 @@ typedef struct{
 	int dvd;
 }PCB;
 
+
 typedef struct{
 	int impresora;
 	int scanner;
@@ -25,13 +26,6 @@ typedef struct{
 	int DVD;
 }RECURSO;
 
-/*//---Recursos Clave---
-RECURSO Recursos;
-Recursos->impresora = 2;
-Recursos->scanner = 1;
-Recursos->modem = 1;       //no quiere compilar >:c (Para llevar la cuenta de los recursos que se esten usando)
-Recursos->DVD = 2;
-//---Recursos Clave---*/
 
 int main(int argc, char* argv[]){
 
@@ -40,15 +34,26 @@ int main(int argc, char* argv[]){
 	FILE *lista;                                      // Archivo .in
 	int length,i,b;
 	char a[21];
-	Queue real_time,priority_1,priority_2,priority_3; // Las Colas
+	
 	lista = fopen(argv[1],"r");
 
-//Se inicializan las colas -------------
-	queueInit(&real_time, sizeof(PCB));
-	queueInit(&priority_1, sizeof(PCB));
-	queueInit(&priority_2, sizeof(PCB));
-	queueInit(&priority_3, sizeof(PCB));
-//--------------------------------------
+	//---Recursos Clave---
+		RECURSO *Recursos =  malloc(sizeof(RECURSO));
+		Recursos->impresora = 2;
+		Recursos->scanner = 1;
+		Recursos->modem = 1;       
+		Recursos->DVD = 2;
+	//---Recursos Clave---
+
+	Queue real_time,priority_1,priority_2,priority_3; // Las Colas
+	//Se inicializan las colas -------------
+		queueInit(&real_time, sizeof(PCB));
+		queueInit(&priority_1, sizeof(PCB));
+		queueInit(&priority_2, sizeof(PCB));
+		queueInit(&priority_3, sizeof(PCB));
+	//--------------------------------------
+
+
 
 //---------------------Se leen los procesos linea por linea---------------------------
 	while(!feof(lista)){
@@ -65,25 +70,7 @@ int main(int argc, char* argv[]){
 
 		if(proceso->prioridad == 0){
 			enqueue(&real_time,&proceso);
-			//Iniciar T-20seg
-			//verificar que no hayan procesos en ejecucion
-				//Si es true se verifica tiempo de inicio con tiempo del procesador
-				//Se pasa a ejecutar la cosa
-			//cad[1] = a[6]; -> para pasar la cantidad de segundos al child.c pero esta sacando un warning ahi
-			cad[1] = "4";
-			p_id=fork();
-			if (p_id == 0) {
-				printf( "PID: %d, Prioridad: 0, T-restante: ?\n",getpid() );
-				execlp(cad[0], "child", cad[1], NULL);    //Se ejecuta el child e imprime los segundos PERO no se devuelve al codigo
-				//Aqui como que se mata o algo ?? 
-				printf("Proceso finalizado\n");             //good caso :v
-				dequeue(&real_time,&proceso);
-				exit(0);
-			} else if (p_id < 0){
-			exit(0);
-			}
 			printf("Enchufado\n");
-
 		}else if(proceso->prioridad == 1){
 			enqueue(&priority_1,&proceso);
 			printf("Clase Alta\n");
@@ -96,7 +83,26 @@ int main(int argc, char* argv[]){
 		}
 	}
 //------------------------------------------------------------------------------------
-
+while((getQueueSize(&priority_3)>0) || (getQueueSize(&priority_2)>0) || (getQueueSize(&priority_1)>0) || (getQueueSize(&real_time)>0)){         // Mientras allan procesos en alguna de las colas se ejecutara
+	if(getQueueSize(&real_time)>0){			// Si la cola de tiempo real esta llena se ejecuta primero siempre
+		/*SE HACE PROCESO DE FORK Y VAINA LOCA*/
+		dequeue(&real_time);				// Luego ejecutado se saca de la cola
+		printf("Proceso Real\n");
+		continue;							// Se continua en el inicio del ciclo por que tiene que evaluar que no hayan mas en tiempo real
+	}else if(getQueueSize(&priority_1)>0){  
+		dequeue(&priority_1);
+		printf("Prioridad 1\n");			// Misma Logica para todas las demas colas
+		continue;
+	}else if(getQueueSize(&priority_2)>0){
+		dequeue(&priority_2);
+		printf("Prioridad 2\n");
+		continue;
+	}else if(getQueueSize(&priority_3)>0){
+		dequeue(&priority_3);
+		printf("Prioridad 3\n");
+		continue;
+	}
+}
 
 	fclose(lista);
 	return 0;

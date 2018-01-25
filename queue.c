@@ -39,12 +39,12 @@ int enqueue(Queue *q, const void *data){
     return 0;
 }
 
-void dequeue(Queue *q, void *data){
+void dequeue(Queue *q/*, void *data*/){
 
     if(q->sizeOfQueue > 0){
 
         node *temp = q->head;
-        memcpy(data, temp->data, q->memSize);
+       // memcpy(data, temp->data, q->memSize);
 
         if(q->sizeOfQueue > 1){
             q->head = q->head->next;
